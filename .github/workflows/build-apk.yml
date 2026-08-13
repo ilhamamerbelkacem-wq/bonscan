@@ -1,8 +1,6 @@
 name: Build APK
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -12,12 +10,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug - List files
+      - name: Debug - Check file structure
         run: |
-          echo "=== Files in repo ==="
+          echo "=== Root files ==="
           ls -la
-          echo "=== Files in www ==="
-          ls -la www/ || echo "www folder missing!"
+          echo "=== Check www folder ==="
+          ls -la www/ 2>/dev/null || echo "www/ NOT FOUND at root"
+          echo "=== Check subfolders ==="
+          find . -name "index.html" -type f 2>/dev/null || echo "No index.html found"
+
+      - name: Fix file structure if needed
+        run: |
+          # If files are inside bonscan-mobile/ subfolder, move them to root
+          if [ -d "bonscan-mobile" ]; then
+            echo "Found bonscan-mobile subfolder, moving files to root..."
+            mv bonscan-mobile/* .
+            mv bonscan-mobile/.github . 2>/dev/null || true
+            rm -rf bonscan-mobile
+          fi
+          # If www doesn't exist but html/css/js files are at root, create www
+          if [ ! -d "www" ]; then
+            echo "Creating www folder..."
+            mkdir -p www/icons
+            cp index.html www/ 2>/dev/null || true
+            cp style.css www/ 2>/dev/null || true
+            cp app.js www/ 2>/dev/null || true
+            cp manifest.json www/ 2>/dev/null || true
+            cp sw.js www/ 2>/dev/null || true
+            cp -r icons/* www/icons/ 2>/dev/null || true
+          fi
+          echo "=== Final structure ==="
+          ls -la
+          ls -la www/
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

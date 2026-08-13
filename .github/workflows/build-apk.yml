@@ -12,6 +12,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug - List files
+        run: |
+          echo "=== Files in repo ==="
+          ls -la
+          echo "=== Files in www ==="
+          ls -la www/ || echo "www folder missing!"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -29,8 +36,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Add Android platform
-        run: npx cap add android
+      - name: Clean and add Android platform
+        run: |
+          rm -rf android
+          npx cap add android
 
       - name: Sync Capacitor
         run: npx cap sync android

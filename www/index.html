@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Scanner de Bons de Commande</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>BonScan Pro</span>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-screen="home">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Accueil
+        </button>
+        <button class="nav-btn" data-screen="scan">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Scanner
+        </button>
+        <button class="nav-btn" data-screen="history">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Historique
+        </button>
+        <button class="nav-btn" data-screen="stats">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Stats
+        </button>
+      </nav>
+    </header>
+
+    <!-- Écran Accueil -->
+    <section id="screen-home" class="screen active">
+      <div class="hero-card">
+        <h1>BonScan Pro</h1>
+        <p>Scannez vos bons de commande, suivez l'évolution des prix et gérez vos fournisseurs.</p>
+        <button class="btn btn-primary btn-large" onclick="showScreen('scan')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Nouveau scan
+        </button>
+      </div>
+
+      <div class="card">
+        <h2>Fournisseurs récents</h2>
+        <div id="recentSuppliers" class="suppliers-grid"></div>
+      </div>
+
+      <div class="card">
+        <h2>Derniers bons scannés</h2>
+        <div id="recentBons" class="bons-list"></div>
+      </div>
+    </section>
+
+    <!-- Écran Scan -->
+    <section id="screen-scan" class="screen">
+      <div class="card">
+        <h2>Nouveau bon de commande</h2>
+
+        <div class="form-group">
+          <label>Fournisseur</label>
+          <div class="input-row">
+            <select id="supplierSelect">
+              <option value="">-- Choisir un fournisseur --</option>
+            </select>
+            <button class="btn btn-icon" onclick="toggleNewSupplier()" title="Nouveau fournisseur">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+          <input type="text" id="newSupplierInput" placeholder="Nom du nouveau fournisseur" style="display:none;margin-top:8px;">
+        </div>
+
+        <div class="form-group">
+          <label>Date du bon</label>
+          <input type="date" id="bonDate">
+        </div>
+
+        <div class="form-group">
+          <label>Numéro du bon (optionnel)</label>
+          <input type="text" id="bonNumber" placeholder="Ex: BC-2026-001">
+        </div>
+
+        <div class="scan-zone">
+          <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
+          <button class="btn btn-scan" onclick="document.getElementById('fileInput').click()">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Prendre une photo ou choisir une image</span>
+            <small>Appuyez pour ouvrir la caméra ou la galerie</small>
+          </button>
+          <div id="scanPreview" class="scan-preview" style="display:none">
+            <img id="previewImg" src="" alt="Aperçu">
+            <button class="btn btn-primary" onclick="processOCR()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Extraire le texte (OCR)
+            </button>
+          </div>
+        </div>
+
+        <div class="divider">ou saisie manuelle</div>
+
+        <button class="btn btn-secondary w-full" onclick="createManualBon()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Créer un bon manuellement
+        </button>
+      </div>
+
+      <!-- OCR Progress -->
+      <div id="ocrProgress" class="card" style="display:none">
+        <div class="progress-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin"><polyline points="23 4 23 10 17 10"/></svg>
+          <span>Analyse de l'image en cours...</span>
+        </div>
+        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+        <div id="progressText" class="progress-text">Initialisation...</div>
+      </div>
+    </section>
+
+    <!-- Écran Édition Tableau -->
+    <section id="screen-edit" class="screen">
+      <div class="card">
+        <div class="edit-header">
+          <div>
+            <h2 id="editTitle">Bon de commande</h2>
+            <div id="editMeta" class="meta"></div>
+          </div>
+          <div class="edit-actions">
+            <button class="btn" onclick="showScreen('scan')">Annuler</button>
+            <button class="btn btn-primary" onclick="saveBon()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Enregistrer
+            </button>
+          </div>
+        </div>
+
+        <!-- Alertes prix -->
+        <div id="priceAlerts" class="alerts-container" style="display:none"></div>
+
+        <!-- Tableau -->
+        <div class="table-wrapper">
+          <table id="productsTable">
+            <thead>
+              <tr>
+                <th style="width:40px">N°</th>
+                <th>Référence</th>
+                <th>Produit</th>
+                <th style="width:70px">Qté</th>
+                <th style="width:80px">Unité</th>
+                <th style="width:110px">Prix unit. (€)</th>
+                <th style="width:90px">Total (€)</th>
+                <th style="width:50px"></th>
+              </tr>
+            </thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="table-footer">
+          <button class="btn btn-secondary" onclick="addProductRow()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une ligne
+          </button>
+          <div class="total-box">
+            <span class="total-label">Total bon :</span>
+            <span id="grandTotal" class="total-value">0,00 €</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Écran Historique -->
+    <section id="screen-history" class="screen">
+      <div class="card">
+        <div class="history-header">
+          <h2>Historique des bons</h2>
+          <div class="filter-row">
+            <select id="historyFilter" onchange="renderHistory()">
+              <option value="">Tous les fournisseurs</option>
+            </select>
+            <input type="text" id="historySearch" placeholder="Rechercher..." oninput="renderHistory()">
+          </div>
+        </div>
+        <div id="historyContent" class="history-content"></div>
+      </div>
+    </section>
+
+    <!-- Écran Stats -->
+    <section id="screen-stats" class="screen">
+      <div class="card">
+        <h2>Statistiques</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="statTotalBons">0</div>
+            <div class="stat-label">Bons enregistrés</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statTotalSuppliers">0</div>
+            <div class="stat-label">Fournisseurs</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statTotalAmount">0 €</div>
+            <div class="stat-label">Montant total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statPriceChanges">0</div>
+            <div class="stat-label">Variations de prix</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Évolution des prix par produit</h2>
+        <div id="priceEvolution" class="price-evolution"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

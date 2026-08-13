@@ -1,0 +1,1 @@
+Remplacez ces fichiers par de vraies icônes PNG 192x192 et 512x512.\nVous pouvez en générer gratuitement sur https://favicon.io/
